@@ -1,86 +1,82 @@
 var redux = require('redux');
 
-console.log('starting redux example');
+console.log('Starting redux example');
 
 var stateDefault = {
-  name: 'anonymous',
+  name: 'Anonymous',
   hobbies: [],
-  movies: [] //ID, TITLE, and GENRE
+  movies: []
 };
 var nextHobbyId = 1;
-var nextMovieID = 1;
+var nextMovieId = 1;
 
 
-//A reducer is a pure function that takes your existing state as argument
-var reducer = (state = stateDefault, action) => {
-  //state = state || {name: 'anonymous'};
-  console.log('New action', action);
-  switch (action) {
+var nameReducer = (state = 'anonymous', action) => {
+  switch (action.type) {
     case 'CHANGE_NAME':
-      return {
-        ...state,
-        name: action.name
-      };
+      return action.name
+    default:
+      return state;
+  };
+}
+
+var hobbiesReducer = (state = [], action) => {
+  switch (action.type) {
     case 'ADD_HOBBY':
-      return {
-        ...state,
-        hobbies: [
-          ...state.hobbies,
-          {
-            id: nextHobbyId++,
-            hobby: action.hobby
-          }
-        ]
-      };
-      case 'REMOVE_HOBBY':
-        return {
-          ...state,
-          hobbies: state.hobbies.filter((hobby) => {
-            return hobby.id !== action.id
-          })
-        }
-    case 'ADD_MOVIE':
-      return {
-        ...state,
-        movies: [
-          ...state.movies,
-          {
-            id: nextMovieID++,
-            name: action.name,
-            genre: action.genre
-          }
-        ]
+    return [
+      ...state,
+      {
+        id: nextHobbyId++,
+        hobby: action.hobby
       }
-    case 'REMOVE_MOVIE':
-      return {
-        ...state,
-        movies: state.movies.filter( (movie) => {
-          return movie.id !== action.id
-        })
-      }
+    ];
+    case 'REMOVE_HOBBY':
+      return  state.filter((hobby) => hobby.id !== action.id)
     default:
       return state;
   }
-
-
-  return state;
 };
-var store = redux.createStore(reducer, redux.compose(
-  window.devToolsExtension() ? window.devToolsExtension() : f => f
-));
 
-// .subscribe() to changes in your state
-store.subscribe(() => {
-  var state = store.getState();
+var moviesReducer = (state = [], action) => {
+  switch (action.type) {
+    case 'ADD_MOVIE':
+      return [
+        ...state,
+        {
+          id: nextMovieId++,
+          title: action.title,
+          genre: action.genre
+        }
+      ]
+    case 'REMOVE_MOVIE':
+      return state.filter((movie) => movie.id !== action.id)
+    default:
+      return state;
+  }
+}
 
-  console.log('Name is ', state.name);
-  document.getElementById('app').innerHTML = state.name;
+var reducer = redux.combineReducers({
+  name: nameReducer,
+  hobbies: hobbiesReducer,
+  movies: moviesReducer
 
-  console.log('New State', store.getState());
 })
 
+var store = redux.createStore(reducer, redux.compose(
+  window.devToolsExtension ? window.devToolsExtension() : f => f
+));
 
-// .getState() the current state
+// Subscribe to changes
+var unsubscribe = store.subscribe(() => {
+  var state = store.getState();
+
+  console.log('Name is', state.name);
+  document.getElementById('app').innerHTML = state.name;
+
+  console.log('New state', store.getState());
+});
+// unsubscribe();
+
 var currentState = store.getState();
 console.log('currentState', currentState);
 
@@ -89,18 +85,14 @@ store.dispatch({
   name: 'Andrew'
 });
 
-//HOBBIES
-
 store.dispatch({
   type: 'ADD_HOBBY',
-  name: 'Running',
-
+  hobby: 'Running'
 });
 
 store.dispatch({
   type: 'ADD_HOBBY',
-  name: 'Walking',
-
+  hobby: 'Walking'
 });
 
 store.dispatch({
@@ -108,17 +100,20 @@ store.dispatch({
   id: 2
 });
 
+store.dispatch({
+  type: 'CHANGE_NAME',
+  name: 'Emily'
+});
 
-//MOVIES
 store.dispatch({
   type: 'ADD_MOVIE',
-  name: 'Die Hard',
+  title: 'Mad Max',
   genre: 'Action'
 });
 
 store.dispatch({
   type: 'ADD_MOVIE',
-  name: 'Der Herd',
+  title: 'Star Wars',
   genre: 'Action'
 });
 
@@ -126,10 +121,3 @@ store.dispatch({
   type: 'REMOVE_MOVIE',
   id: 1
 });
-
-
-
-store.dispatch({
-  type: 'CHANGE_NAME',
-  name: 'Arturo'
-})
